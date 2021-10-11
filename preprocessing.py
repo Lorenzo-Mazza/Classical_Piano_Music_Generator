@@ -25,7 +25,7 @@ def prepare_batches(notes, durations, velocities, lookups, classes, batch_size=3
     vel_inp = []
     vel_out = []
 
-    # create input sequences and the corresponding outputs
+    # create input sequences and the corresponding real_rnn_sequences
     for i in range(len(notes) - batch_size):
         notes_sequence_in = notes[i:i + batch_size]
         notes_sequence_out = notes[i + batch_size]
@@ -46,7 +46,7 @@ def prepare_batches(notes, durations, velocities, lookups, classes, batch_size=3
     n_batches = len(notes_inp)
 
     # reshape the inputs into a format compatible with LSTM layers
-    # convert the outputs into a proper format
+    # convert the real_rnn_sequences into a proper format
     inputs = [np.reshape(notes_inp, (n_batches, batch_size)),
               np.reshape(durations_inp, (n_batches, batch_size)),
               np.reshape(vel_inp, (n_batches, batch_size))]

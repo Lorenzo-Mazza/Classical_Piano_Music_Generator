@@ -37,8 +37,10 @@ def load_data(path='maestro-v2.0.0', batch_size=32):
                 notes.append('.'.join(n.nameWithOctave for n in element.pitches))
                 durations.append(element.duration.quarterLength)
                 velocities.append(element.volume.velocity)
+
+
         counter += 1
-        if counter == 10: break
+        if counter == 1: break
 
     return notes,durations,velocities
 
@@ -56,5 +58,6 @@ def process_data(data, batch_size=32):
     dictionaries = [preprocessing.create_dict(note_types), preprocessing.create_dict(duration_types),
                     preprocessing.create_dict(velocity_types)]
 
+    # Create correct input-output sequences for the RNN
     return preprocessing.prepare_batches(notes, durations, velocities,
                                          dictionaries, inp_classes, batch_size)
