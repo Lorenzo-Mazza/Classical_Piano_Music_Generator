@@ -40,7 +40,7 @@ def load_data(path='maestro-v2.0.0', batch_size=32):
 
 
         counter += 1
-        if counter == 1: break
+        #if counter == 1: break
 
     return notes,durations,velocities
 

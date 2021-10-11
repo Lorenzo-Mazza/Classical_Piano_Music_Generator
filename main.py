@@ -106,7 +106,7 @@ early_stopping = EarlyStopping(
     patience=10
 )
 model.fit(train_inputs, train_outputs
-          , epochs=1, batch_size=32
+          , epochs=10000, batch_size=32
           , validation_split = 0.2
           , callbacks=early_stopping
           , shuffle=True
