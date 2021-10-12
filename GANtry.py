@@ -1,4 +1,4 @@
-
+import pypianoroll
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.initializers.initializers_v2 import RandomNormal
 from keras.optimizer_v2.adam import Adam
@@ -28,7 +28,7 @@ from keras.layers.convolutional import UpSampling2D, Conv2D, Conv1D, Conv2DTrans
 from keras.models import Sequential, Model
 
 
-FIXED_NUMBER_OF_BARS= 64
+FIXED_NUMBER_OF_BARS= 2
 QUANTIZATION = 32
 BATCH_SIZE = 50
 latent_dimension = 256
@@ -119,7 +119,7 @@ class RNNGAN:
         critic_input = Input(shape=(self.n_bars,self.n_steps_per_bar,self.input_shape,1), name='critic_input')
         x = critic_input
         x = self.conv(x, f=128, k=(2, 1, 1), s=(1, 1, 1), a='lrelu', p='valid')
-        x = self.conv(x, f=128, k=(int(self.n_bars/4), 1, 1), s=(1, 1, 1), a='lrelu',p='valid')
+        x = self.conv(x, f=128, k=(int(self.n_bars/2), 1, 1), s=(1, 1, 1), a='lrelu',p='valid')
         x = self.conv(x, f=128, k=(8, 1, 12), s=(8, 1, 12), a='lrelu', p='same')
         x = self.conv(x, f=128, k=(1, 1, 7), s=(1, 1, 7), a='lrelu', p='same')
         x = self.conv(x, f=128, k=(1, 2, 1), s=(1, 2, 1), a='lrelu', p='same')
@@ -231,8 +231,8 @@ class RNNGAN:
             for _ in range(critic_loops):
                 d_loss = self.train_discriminator(x_train, batch_size, using_generator, x_train_iter)
             g_loss = self.train_generator(batch_size)
-            print("%d (%d, %d) [D loss: (%.1f)(R %.1f, F %.1f, G %.1f)] [G loss: %.1f]" % (
-             epoch, critic_loops, 1, d_loss[0], d_loss[1], d_loss[2], d_loss[3], g_loss))
+            print("%d (%d, %d) [D loss: (%.1f)(R %.1f, F %.1f] [G loss: %.1f]" % (
+             epoch, critic_loops, 1, d_loss[0], d_loss[1], d_loss[2], g_loss))
             self.d_losses.append(d_loss)
             self.g_losses.append(g_loss)
             self.epoch += 1
@@ -315,3 +315,15 @@ gan.train(
     training_data
     , batch_size = BATCH_SIZE
     , epochs = EPOCHS)
+
+pred_noise = np.random.normal(0, 1, (1, gan.z_dim))
+gen_scores = gan.generator.predict(pred_noise)
+gen_scores = np.squeeze(gen_scores)
+gen_scores= np.reshape(gen_scores,(gen_scores.shape[0]*gen_scores.shape[1],-1))
+track= pypianoroll.StandardTrack(pianoroll=gen_scores)
+#track=track.binarize()
+multi= pypianoroll.Multitrack(tracks=[track])
+multi.set_resolution(QUANTIZATION)
+pypianoroll.write(path='try.mid',multitrack=multi)
+a=0
+
