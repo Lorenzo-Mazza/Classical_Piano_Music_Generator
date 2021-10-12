@@ -254,7 +254,7 @@ class MuseGAN:
         # Load the dataset
         X_train= np.array(list(X_train.as_numpy_iterator()))
         # Rescale -1 to 1
-        #X_train = (X_train.astype(np.float32) - 67.5) / 67.5
+        X_train = (2*(X_train.astype(np.float32)))-1
 
         # Adversarial ground truths
         valid = -np.ones((batch_size, 1))
@@ -382,7 +382,7 @@ training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
 #training_data = load_data()
-optimizer= RMSprop(learning_rate=0.1)
+optimizer= RMSprop(learning_rate=0.01)
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.00005
               , generator_lr=0.00005, optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
@@ -404,7 +404,7 @@ gen_scores = gan.generator.predict(pred_noise)
 gen_scores = np.squeeze(gen_scores)
 #gen_scores = (gen_scores.astype(np.float32)*67.5) + 67.5
 gen_scores= np.reshape(gen_scores,(gen_scores.shape[0]*gen_scores.shape[1],-1))
-gen_scores=np.where(gen_scores>THRESHOLD,1,0)
+gen_scores=np.where(gen_scores>THRESHOLD,70,0)
 track= pypianoroll.StandardTrack(pianoroll=gen_scores)
 #track=track.binarize()
 multi= pypianoroll.Multitrack(tracks=[track])

@@ -26,8 +26,8 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
             songs.append(piano_roll)
             counter+=1
 
-       # if counter==50:
-            # break
+        #if counter==50:
+        #     break
     return songs
 
 def create_batches(data,batch_size):
