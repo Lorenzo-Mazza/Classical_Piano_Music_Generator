@@ -252,9 +252,9 @@ class MuseGAN:
 
     def train(self, X_train, batch_size, epochs, n_critic=5):
         # Load the dataset
-        X_train= np.array(list(X_train.as_numpy_iterator()),dtype=np.float32)
+        X_train= list(X_train.as_numpy_iterator())
         # Rescale -1 to 1
-        X_train = 2 * X_train - 1
+        X_train=[2 * batch - 1 for batch in X_train]
 
         # Adversarial ground truths
         valid = -np.ones((batch_size, 1))
@@ -269,7 +269,7 @@ class MuseGAN:
                 # ---------------------
 
                 # Select a random batch of images
-                idx = np.random.randint(0, X_train.shape[0], 1)
+                idx = np.random.randint(0, len(X_train), 1)
                 imgs = X_train[idx]
                 imgs= np.squeeze(imgs,axis=0)
 

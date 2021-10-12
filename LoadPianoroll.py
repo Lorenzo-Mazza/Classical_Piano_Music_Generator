@@ -26,7 +26,7 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
             songs.append(piano_roll)
             counter+=1
 
-        #if counter==50:
+        #if counter==64:
         #     break
     return songs
 
