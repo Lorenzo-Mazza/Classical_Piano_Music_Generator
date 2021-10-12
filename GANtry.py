@@ -247,11 +247,10 @@ class MuseGAN:
         return self.generator_model.train_on_batch(noise, valid)
 
 
-    def train(self, X_train, batch_size, epochs, n_critic=5, using_generator=False):
+    def train(self, X_train, batch_size, epochs, n_critic=5):
         # Load the dataset
-        # Rescale -1 to 1
         X_train= np.array(list(X_train.as_numpy_iterator()))
-
+        # Rescale -1 to 1
         X_train = (X_train.astype(np.float32) - 67.5) / 67.5
 
         # Adversarial ground truths
@@ -380,9 +379,9 @@ training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
 #training_data = load_data()
-optimizer= RMSprop(learning_rate=0.00005, clipvalue=0.01)
-gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.0001
-              , generator_lr=0.0001, optimiser=optimizer, z_dim=latent_dimension
+optimizer= RMSprop(learning_rate=0.0001)
+gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.00005
+              , generator_lr=0.00005, optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.discriminator.summary()
