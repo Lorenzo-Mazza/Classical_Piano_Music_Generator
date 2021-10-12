@@ -254,7 +254,12 @@ class MuseGAN:
         # Load the dataset
         X_train= list(X_train.as_numpy_iterator())
         # Rescale -1 to 1
-        X_train=[2 * batch - 1 for batch in X_train]
+        for batch in X_train:
+            batch=2 * batch - 1
+            if batch.shape[0]%batch_size!=0:
+                fill=-np.ones((batch_size-batch.shape[0]%batch_size,*batch.shape[1:]))
+                batch=np.concatenate((batch,fill),axis=0)
+       # X_train=[2 * batch - 1 for batch in X_train]
 
         # Adversarial ground truths
         valid = -np.ones((batch_size, 1))
@@ -382,7 +387,7 @@ fixed_timesteps= FIXED_NUMBER_OF_BARS*QUANTIZATION
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
-#training_data = load_data()
+# try 0.001 next
 optimizer= RMSprop(learning_rate=0.01)
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.00005
               , generator_lr=0.00005, optimiser=optimizer, z_dim=latent_dimension
