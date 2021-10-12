@@ -269,7 +269,8 @@ class MuseGAN:
                 # ---------------------
 
                 # Select a random batch of images
-                idx = np.random.randint(0, len(X_train), 1)
+                n_batches= int(len(X_train))
+                idx = np.random.randint(0, n_batches, 1)
                 imgs = X_train[idx]
                 imgs= np.squeeze(imgs,axis=0)
 
@@ -389,7 +390,7 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=
 gan.generator.summary()
 gan.discriminator.summary()
 
-EPOCHS = 6000
+EPOCHS = 3000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 THRESHOLD= 0.9
