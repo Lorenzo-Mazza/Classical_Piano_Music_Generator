@@ -20,7 +20,7 @@ from keras.layers.convolutional import UpSampling2D, Conv2D, Conv1D, Conv2DTrans
 from keras.models import Sequential, Model
 
 
-FIXED_NUMBER_OF_BARS= 2
+FIXED_NUMBER_OF_BARS= 8
 QUANTIZATION = 32
 BATCH_SIZE = 50
 latent_dimension = 256
@@ -293,9 +293,9 @@ training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
 #training_data = load_data()
-
-gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.001
-              , generator_lr=0.001, optimiser='adam', z_dim=latent_dimension
+optimizer= RMSprop(learning_rate=0.001, clipvalue=0.01)
+gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.0001
+              , generator_lr=0.0001, optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.discriminator.summary()
