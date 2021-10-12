@@ -130,13 +130,13 @@ class MuseGAN:
         input_layer = Input(shape=(self.z_dim,))
         #x = Embedding(self.input_shape, self.z_dim)(input_layer)
         x = Dense(1024)(input_layer)
-        x = BatchNormalization(momentum=0.9)(x)
+        x = BatchNormalization(momentum=0.8)(x)
         x = Activation('relu')(x)
         x = Reshape([2, 1, 512])(x)
         x = self.conv_t(x, f=512, k=(4, 1), s=(4, 1), a='relu', p='same', bn=True)
-        x = self.conv_t(x, f=512, k=(2, 1), s=(2, 1), a='relu', p='same', bn=True)
         x = self.conv_t(x, f=256, k=(2, 1), s=(2, 1), a='relu', p='same', bn=True)
-        x = self.conv_t(x, f=256, k=(1, 8), s=(1, 8), a='relu', p='same', bn=True)
+        x = self.conv_t(x, f=256, k=(2, 1), s=(2, 1), a='relu', p='same', bn=True)
+        x = self.conv_t(x, f=128, k=(1, 8), s=(1, 8), a='relu', p='same', bn=True)
         x = self.conv_t(x, f=self.n_bars, k=(1, 16), s=(1, 16), a='tanh', p='same', bn=False)
         output_layer = Reshape([self.n_bars, self.n_steps_per_bar, self.input_shape,1])(x)
         return Model(input_layer, output_layer)
@@ -145,13 +145,16 @@ class MuseGAN:
 
         critic_input = Input(shape=(self.n_bars,self.n_steps_per_bar,self.input_shape,1), name='critic_input')
         x = critic_input
-        x = self.conv(x, f=128, k=(2, 1, 1), s=(1, 1, 1), a='lrelu', p='valid')
-        x = self.conv(x, f=128, k=(int(self.n_bars/2), 1, 1), s=(1, 1, 1), a='lrelu',p='valid')
+        x = self.conv(x, f=32, k=(2, 1, 1), s=(1, 1, 1), a='lrelu', p='valid')
+        x = self.conv(x, f=64, k=(int(self.n_bars/2), 1, 1), s=(1, 1, 1), a='lrelu',p='valid')
+        x= (Dropout(0.25))(x)
         x = self.conv(x, f=128, k=(8, 1, 12), s=(8, 1, 12), a='lrelu', p='same')
         x = self.conv(x, f=128, k=(1, 1, 7), s=(1, 1, 7), a='lrelu', p='same')
         x = self.conv(x, f=128, k=(1, 2, 1), s=(1, 2, 1), a='lrelu', p='same')
         x = self.conv(x, f=128, k=(1, 2, 1), s=(1, 2, 1), a='lrelu', p='same')
+        x= (Dropout(0.25))(x)
         x = self.conv(x, f=256, k=(1, 4, 1), s=(1, 2, 1), a='lrelu', p='same')
+        x= (Dropout(0.25))(x)
         x = self.conv(x, f=512, k=(1, 3, 1), s=(1, 2, 1), a='lrelu', p='same')
         x = Flatten()(x)
         x = Dense(1024, kernel_initializer=self.weight_init)(x)
@@ -251,7 +254,7 @@ class MuseGAN:
         # Load the dataset
         X_train= np.array(list(X_train.as_numpy_iterator()))
         # Rescale -1 to 1
-        X_train = (X_train.astype(np.float32) - 67.5) / 67.5
+        #X_train = (X_train.astype(np.float32) - 67.5) / 67.5
 
         # Adversarial ground truths
         valid = -np.ones((batch_size, 1))
@@ -379,14 +382,14 @@ training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
 #training_data = load_data()
-optimizer= RMSprop(learning_rate=0.001)
+optimizer= RMSprop(learning_rate=0.01)
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.00005
               , generator_lr=0.00005, optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.discriminator.summary()
 
-EPOCHS = 6000
+EPOCHS = 6
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 
@@ -399,6 +402,7 @@ gan.train(
 pred_noise = np.random.normal(0, 1, (1, gan.z_dim))
 gen_scores = gan.generator.predict(pred_noise)
 gen_scores = np.squeeze(gen_scores)
+#gen_scores = (gen_scores.astype(np.float32)*67.5) + 67.5
 gen_scores= np.reshape(gen_scores,(gen_scores.shape[0]*gen_scores.shape[1],-1))
 track= pypianoroll.StandardTrack(pianoroll=gen_scores)
 #track=track.binarize()
