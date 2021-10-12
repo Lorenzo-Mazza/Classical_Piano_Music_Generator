@@ -5,8 +5,8 @@ from keras.optimizer_v2.adam import Adam
 from keras.optimizer_v2.rmsprop import RMSprop
 
 import LoadPianoroll
-from data import *
 import tensorflow as tf
+import numpy as np
 from keras.layers import LSTM, Input, Dropout, Dense, Activation, Embedding, Concatenate, Reshape
 from keras.layers import Flatten, RepeatVector, Permute, TimeDistributed
 from keras.layers import Multiply, Lambda, Softmax
