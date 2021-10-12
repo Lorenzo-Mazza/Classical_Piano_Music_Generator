@@ -33,8 +33,12 @@ QUANTIZATION = 32
 BATCH_SIZE = 50
 latent_dimension = 256
 
+physical_devices = tf.config.list_physical_devices('GPU')
+for device in physical_devices:
+  tf.config.experimental.set_memory_growth(device, True)
 
-class RNNGAN:
+
+class MuseGAN:
     def __init__(self, input_shape, discriminator_lr, generator_lr,
                  optimiser, z_dim, batch_size, quantization):
 
@@ -298,9 +302,9 @@ input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
 #training_data = load_data()
 
-gan = RNNGAN(input_shape=training_data.element_spec.shape[3],discriminator_lr=0.001
-             ,generator_lr=0.001, optimiser='adam', z_dim=latent_dimension
-             ,batch_size=BATCH_SIZE, quantization=QUANTIZATION)
+gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.001
+              , generator_lr=0.001, optimiser='adam', z_dim=latent_dimension
+              , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.discriminator.summary()
 gan.critic_model.summary()
