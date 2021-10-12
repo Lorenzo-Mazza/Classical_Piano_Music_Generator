@@ -25,8 +25,8 @@ from keras.models import Sequential, Model
 
 FIXED_NUMBER_OF_BARS= 8
 QUANTIZATION = 32
-BATCH_SIZE = 50
-latent_dimension = 100
+BATCH_SIZE = 64
+latent_dimension = 64
 
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
@@ -252,9 +252,9 @@ class MuseGAN:
 
     def train(self, X_train, batch_size, epochs, n_critic=5):
         # Load the dataset
-        X_train= np.array(list(X_train.as_numpy_iterator()))
+        X_train= np.array(list(X_train.as_numpy_iterator()),dtype=np.float32)
         # Rescale -1 to 1
-        X_train = (2*(X_train.astype(np.float32)))-1
+        X_train = 2 * X_train - 1
 
         # Adversarial ground truths
         valid = -np.ones((batch_size, 1))
