@@ -20,13 +20,14 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
         pr.set_resolution(QUANTIZATION)
         if pr.tracks[0].pianoroll.shape[0]>max_timesteps:
             piano_roll= pr.tracks[0].pianoroll[0:max_timesteps, :]
+            piano_roll= np.where(piano_roll>0,1,0)
             piano_roll= np.reshape(piano_roll,(int(max_timesteps/QUANTIZATION),QUANTIZATION,-1))
             piano_roll= np.expand_dims(piano_roll,axis=3)
             songs.append(piano_roll)
             counter+=1
 
-        if counter==1000:
-            break
+       # if counter==50:
+            # break
     return songs
 
 def create_batches(data,batch_size):

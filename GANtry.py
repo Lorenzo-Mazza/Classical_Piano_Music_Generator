@@ -392,7 +392,7 @@ gan.discriminator.summary()
 EPOCHS = 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
-
+THRESHOLD= 0.9
 
 gan.train(
     training_data
@@ -404,6 +404,7 @@ gen_scores = gan.generator.predict(pred_noise)
 gen_scores = np.squeeze(gen_scores)
 #gen_scores = (gen_scores.astype(np.float32)*67.5) + 67.5
 gen_scores= np.reshape(gen_scores,(gen_scores.shape[0]*gen_scores.shape[1],-1))
+gen_scores=np.where(gen_scores>THRESHOLD,1,0)
 track= pypianoroll.StandardTrack(pianoroll=gen_scores)
 #track=track.binarize()
 multi= pypianoroll.Multitrack(tracks=[track])
