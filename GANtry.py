@@ -269,10 +269,10 @@ class MuseGAN:
                 # ---------------------
 
                 # Select a random batch of images
-                n_batches= int(len(X_train))
-                idx = np.random.randint(0, n_batches, 1)
+                n_batches= len(X_train)
+                idx = np.random.randint(0, n_batches)
                 imgs = X_train[idx]
-                imgs= np.squeeze(imgs,axis=0)
+                #imgs= np.squeeze(imgs,axis=0)
 
                 # Sample noise as generator input
                 noise = np.random.normal(0, 1, (batch_size, self.z_dim))
