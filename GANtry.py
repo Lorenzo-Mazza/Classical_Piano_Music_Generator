@@ -3,14 +3,6 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.initializers.initializers_v2 import RandomNormal
 from keras.optimizer_v2.adam import Adam
 from keras.optimizer_v2.rmsprop import RMSprop
-from music21 import *
-import time
-import os
-import pandas as pd
-import numpy as np
-import tensorflow as tf
-import keras
-from keras.utils import np_utils
 
 import LoadPianoroll
 from data import *
@@ -35,7 +27,7 @@ latent_dimension = 256
 
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
-  tf.config.experimental.set_memory_growth(device, True)
+    tf.config.experimental.set_memory_growth(device, True)
 
 
 class MuseGAN:
