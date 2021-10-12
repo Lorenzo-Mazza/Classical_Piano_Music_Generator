@@ -1,3 +1,5 @@
+from functools import partial
+
 import pypianoroll
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.initializers.initializers_v2 import RandomNormal
@@ -11,6 +13,7 @@ from keras.layers import LSTM, Input, Dropout, Dense, Activation, Embedding, Con
 from keras.layers import Flatten, RepeatVector, Permute, TimeDistributed
 from keras.layers import Multiply, Lambda, Softmax
 import keras.backend as K
+from keras.layers.merge import _Merge
 from keras.models import Model
 import tensorflow.keras.optimizers as opt
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
@@ -23,11 +26,12 @@ from keras.models import Sequential, Model
 FIXED_NUMBER_OF_BARS= 8
 QUANTIZATION = 32
 BATCH_SIZE = 50
-latent_dimension = 256
+latent_dimension = 100
 
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
+
 
 
 class MuseGAN:
@@ -37,6 +41,7 @@ class MuseGAN:
         self.discriminator_lr = discriminator_lr
         self.generator_lr = generator_lr
         self.optimiser = optimiser
+        self.clip_value = 0.01
 
         self.input_shape = input_shape  # 128
         self.z_dim = z_dim  # size of encoding
@@ -58,12 +63,38 @@ class MuseGAN:
         self.discriminator = self.build_discriminator()
         # Build the generator
         self.generator = self.build_generator()
-        self.build_adversarial()
 
+        self.discriminator.compile(loss=self.wasserstein,
+            optimizer=optimizer,
+            metrics=['accuracy'])
+        # The generator takes noise as input and generated imgs
+        z = Input(shape=(self.z_dim,))
+        img = self.generator(z)
+
+        # For the combined model we will only train the generator
+        self.discriminator.trainable = False
+
+        # The critic takes generated images as input and determines validity
+        valid = self.discriminator(img)
+
+        # The combined model  (stacked generator and critic)
+        self.combined = Model(z, valid)
+        self.combined.compile(loss=self.wasserstein,
+                              optimizer=optimizer,
+                              metrics=['accuracy'])
 
     @staticmethod
     def wasserstein(y_true, y_pred):
         return K.mean(y_true * y_pred)
+
+
+    def get_activation(self, activation):
+        if activation == 'leaky_relu':
+            layer = LeakyReLU(alpha = 0.2)
+        else:
+            layer = Activation(activation)
+        return layer
+
 
     def conv_t(self, x, f, k, s, a, p, bn):
         x = Conv2DTranspose(
@@ -162,13 +193,14 @@ class MuseGAN:
         fake = self.discriminator(fake_img)
         valid = self.discriminator(real_img)
 
+
+
         self.critic_model = Model(inputs=[real_img, noise_input],outputs=[valid, fake])
 
         self.critic_model.compile(
             loss=[self.wasserstein, self.wasserstein]
             , optimizer=self.get_opti(self.discriminator_lr)
             , loss_weights=[1, 1])
-
         # For the generator we freeze the critic's layers
         self.set_trainable(self.discriminator, False)
         self.set_trainable(self.generator, True)
@@ -180,12 +212,12 @@ class MuseGAN:
         img = self.generator(noise_input)
         # Discriminator determines validity
         model_output = self.discriminator(img)
-        # Defines generator model
-        self.model = Model(noise_input, model_output)
+        # Defines generator generator_model
+        self.generator_model = Model(noise_input, model_output)
 
-        self.model.compile(optimizer=self.get_opti(self.generator_lr)
-                           , loss=self.wasserstein
-                           )
+        self.generator_model.compile(optimizer=self.get_opti(self.generator_lr)
+                                     , loss=self.wasserstein
+                                     )
         self.set_trainable(self.discriminator, True)
 
 
@@ -212,11 +244,61 @@ class MuseGAN:
         valid = np.ones((batch_size, 1), dtype=np.float32)
 
         noise = np.random.normal(0, 1, (batch_size, self.z_dim))
-        return self.model.train_on_batch(noise, valid)
+        return self.generator_model.train_on_batch(noise, valid)
 
 
+    def train(self, X_train, batch_size, epochs, n_critic=5, using_generator=False):
+        # Load the dataset
+        # Rescale -1 to 1
+        X_train= np.array(list(X_train.as_numpy_iterator()))
 
-    def train(self, x_train, batch_size, epochs, n_critic=5, using_generator=False):
+        X_train = (X_train.astype(np.float32) - 67.5) / 67.5
+
+        # Adversarial ground truths
+        valid = -np.ones((batch_size, 1))
+        fake = np.ones((batch_size, 1))
+
+        for epoch in range(epochs):
+
+            for _ in range(n_critic):
+
+                # ---------------------
+                #  Train Discriminator
+                # ---------------------
+
+                # Select a random batch of images
+                idx = np.random.randint(0, X_train.shape[0], 1)
+                imgs = X_train[idx]
+                imgs= np.squeeze(imgs,axis=0)
+
+                # Sample noise as generator input
+                noise = np.random.normal(0, 1, (batch_size, self.z_dim))
+
+                # Generate a batch of new images
+                gen_imgs = self.generator.predict(noise)
+
+                # Train the critic
+                d_loss_real = self.discriminator.train_on_batch(imgs, valid)
+                d_loss_fake = self.discriminator.train_on_batch(gen_imgs, fake)
+                d_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
+
+                # Clip critic weights
+                for l in self.discriminator.layers:
+                    weights = l.get_weights()
+                    weights = [np.clip(w, -self.clip_value, self.clip_value) for w in weights]
+                    l.set_weights(weights)
+
+            # ---------------------
+            #  Train Generator
+            # ---------------------
+
+            g_loss = self.combined.train_on_batch(noise, valid)
+
+            # Plot the progress
+            print("%d [D loss: %f] [G loss: %f]" % (epoch, 1 - d_loss[0], 1 - g_loss[0]))
+
+
+    def train2(self, x_train, batch_size, epochs, n_critic=5, using_generator=False):
         x_train_iter= x_train.as_numpy_iterator()
         x_train= list(x_train_iter)
         for epoch in range(self.epoch, self.epoch + epochs):
@@ -226,9 +308,14 @@ class MuseGAN:
                 critic_loops = n_critic
             for _ in range(critic_loops):
                 d_loss = self.train_discriminator(x_train, batch_size, using_generator, x_train_iter)
+                # Clip critic weights
+                for l in self.discriminator.layers:
+                    weights = l.get_weights()
+                    weights = [np.clip(w, -self.clip_value, self.clip_value) for w in weights]
+                    l.set_weights(weights)
             g_loss = self.train_generator(batch_size)
-            print("%d (%d, %d) [D loss: (%.1f)(R %.1f, F %.1f] [G loss: %.1f]" % (
-             epoch, critic_loops, 1, d_loss[0], d_loss[1], d_loss[2], g_loss))
+            print("%d (%d, %d) [D loss: (%.1f)(R %.1f, F %.1f)] [G loss: %.1f]" %
+                   (epoch, critic_loops, 1, d_loss[0], d_loss[1],d_loss[2],g_loss))
             self.d_losses.append(d_loss)
             self.g_losses.append(g_loss)
             self.epoch += 1
@@ -293,14 +380,12 @@ training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
 #training_data = load_data()
-optimizer= RMSprop(learning_rate=0.001, clipvalue=0.01)
+optimizer= RMSprop(learning_rate=0.00005, clipvalue=0.01)
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.0001
               , generator_lr=0.0001, optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.discriminator.summary()
-gan.critic_model.summary()
-gan.model.summary()
 
 EPOCHS = 6000
 PRINT_EVERY_N_BATCHES = 10
