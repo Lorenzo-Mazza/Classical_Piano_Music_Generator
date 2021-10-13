@@ -404,10 +404,9 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 2000
+EPOCHS = 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
-THRESHOLD= 0.75
 
 gan.train(
     training_data
@@ -419,8 +418,7 @@ gen_scores = gan.generator.predict(pred_noise)
 gen_scores = np.squeeze(gen_scores)
 #gen_scores= np.reshape(gen_scores,(gen_scores.shape[0]*gen_scores.shape[1],-1))
 gen_scores= np.reshape(gen_scores,(fixed_timesteps,-1))
-#THRESHOLD*=np.max(gen_scores)
-gen_scores=np.where(gen_scores>0,70,0)
+gen_scores=np.where(gen_scores>0,67,0)
 track= pypianoroll.StandardTrack(pianoroll=gen_scores)
 #track=track.binarize()
 multi= pypianoroll.Multitrack(tracks=[track],resolution=QUANTIZATION)
