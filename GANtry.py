@@ -23,10 +23,10 @@ from keras.layers.convolutional import UpSampling2D, Conv2D, Conv1D, Conv2DTrans
 from keras.models import Sequential, Model
 
 
-FIXED_NUMBER_OF_QUARTERS= 8
+FIXED_NUMBER_OF_QUARTERS= 32
 QUANTIZATION = 8
 BATCH_SIZE = 64
-latent_dimension = 64
+latent_dimension = 128
 
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
@@ -128,7 +128,7 @@ class MuseGAN:
     def build_generator(self):
         """ create the structure of the neural network """
         input_layer = Input(shape=(self.z_dim,))
-        #x = Embedding(self.input_shape, self.z_dim)(input_layer)
+        #x = Embedding(self.input_shape, self.latent_dim)(input_layer)
         x = Dense(1024)(input_layer)
         x = BatchNormalization(momentum=0.8)(x)
         x = Activation('relu')(x)
@@ -236,7 +236,7 @@ class MuseGAN:
             true_imgs = x_train[idx]
 
         noise = np.random.normal(0, 1, (batch_size, self.z_dim))
-        #noise = np.random.uniform(0, 128, (batch_size, self.z_dim))
+        #noise = np.random.uniform(0, 128, (batch_size, self.latent_dim))
         d_loss = self.critic_model.train_on_batch([true_imgs, noise],[valid, fake])
         return d_loss
 
@@ -263,6 +263,8 @@ class MuseGAN:
         valid = -np.ones((batch_size, 1))
         fake = np.ones((batch_size, 1))
 
+        early_stopping=0
+        d_loss_prev= np.inf
         for epoch in range(epochs):
 
             for _ in range(n_critic):
@@ -283,10 +285,18 @@ class MuseGAN:
                 # Generate a batch of new images
                 gen_imgs = self.generator.predict(noise)
 
+                # Save previous loss
+                if epoch!=0:
+                    d_loss_prev= d_loss[0]
                 # Train the critic
                 d_loss_real = self.critic.train_on_batch(imgs, valid)
                 d_loss_fake = self.critic.train_on_batch(gen_imgs, fake)
                 d_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
+
+                if d_loss_prev<d_loss[0]:
+                    early_stopping+=1
+                else:
+                    early_stopping=0
 
                 # Clip critic weights
                 for l in self.critic.layers:
@@ -302,7 +312,8 @@ class MuseGAN:
 
             # Plot the progress
             print("%d [D loss: %f] [G loss: %f]" % (epoch, 1 - d_loss[0], 1 - g_loss[0]))
-
+            if early_stopping==10:
+                break
 
     def train2(self, x_train, batch_size, epochs, n_critic=5, using_generator=False):
         x_train_iter= x_train.as_numpy_iterator()
@@ -386,7 +397,7 @@ training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
 # try 0.001 next
-optimizer= RMSprop(learning_rate=0.001)
+optimizer= RMSprop(learning_rate=0.0005)
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.00005
               , generator_lr=0.00005, optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
