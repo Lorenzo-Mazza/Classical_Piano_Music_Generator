@@ -393,7 +393,7 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 30
+EPOCHS = 2000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 THRESHOLD= 0.75
