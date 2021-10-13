@@ -75,8 +75,8 @@ def load_data( path='maestro-v2.0.0'):
         songs.append(piano_roll)
         counter+=1
 
-        if counter==1:
-             break
+        #if counter==1:
+        #     break
     return songs
 
 def create_sequences(songs,seq_length):
