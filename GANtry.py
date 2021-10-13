@@ -24,7 +24,7 @@ from keras.models import Sequential, Model
 
 
 FIXED_NUMBER_OF_BARS= 8
-QUANTIZATION = 32
+QUANTIZATION = 8
 BATCH_SIZE = 64
 latent_dimension = 64
 
@@ -393,7 +393,7 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 2000
+EPOCHS = 2
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 THRESHOLD= 0.75
