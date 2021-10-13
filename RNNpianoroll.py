@@ -75,8 +75,8 @@ def load_data( path='maestro-v2.0.0'):
         songs.append(piano_roll)
         counter+=1
 
-        #if counter==1:
-        #     break
+        if counter==500:
+             break
     return songs
 
 def create_sequences(songs,seq_length):
@@ -98,7 +98,7 @@ def create_sequences(songs,seq_length):
 
     return input_sequence,output_sequence
 
-QUANTIZATION = 8
+QUANTIZATION = 4
 # generator_model params
 embedding_size = 100
 rnn_units = 256
