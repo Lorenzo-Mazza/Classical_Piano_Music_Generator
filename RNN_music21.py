@@ -244,22 +244,3 @@ for pattern in prediction_output:
 #midi_stream = midi_stream.chordify()
 timestr = time.strftime("%Y%m%d-%H%M%S")
 midi_stream.write('midi', fp=os.path.join(output_folder, 'output-' + timestr + '.mid'))
-
-
-
-
-#gan = Network.DCGAN(train_outputs)
-
-
-#gan.train(train_outputs,epochs=200,batch_size=32)
-
-#print("end")
-
-
-"""gan.fit(train_inputs, train_outputs,
-          epochs=2000000, batch_size=32,
-          validation_split=0.2,
-          callbacks=early_stopping,
-          shuffle=True
-          )
-"""
