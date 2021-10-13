@@ -103,7 +103,7 @@ QUANTIZATION = 8
 embedding_size = 100
 rnn_units = 256
 sequence_length=64
-use_attention = False
+use_attention = True
 
 training_data = load_data()
 n_notes= training_data[0].shape[1]  # notes= 128
@@ -121,7 +121,7 @@ model.fit(x_tr, y_tr
           , callbacks=early_stopping
           )
 
-max_extra_notes = 64
+max_extra_notes = 512
 max_seq_len = 64
 
 prediction_output = []
