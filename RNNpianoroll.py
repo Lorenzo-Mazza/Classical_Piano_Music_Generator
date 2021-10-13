@@ -70,7 +70,7 @@ def load_data( path='maestro-v2.0.0'):
     for name, author in zip(infos['midi_filename'], infos['canonical_composer']):
         pr= pypianoroll.read(name)
         pr.set_resolution(QUANTIZATION)
-        piano_roll = pr.tracks[0].pianoroll
+        piano_roll = pr.tracks[0].pianoroll[1000:3000, :]
         piano_roll= np.where(piano_roll>0,1,0)
         songs.append(piano_roll)
         counter+=1
