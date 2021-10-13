@@ -8,7 +8,7 @@ import preprocessing
 import numpy as np
 import pypianoroll
 
-QUANTIZATION=32
+QUANTIZATION = 8
 
 def load_data(max_timesteps, path='maestro-v2.0.0'):
     os.chdir(path)
@@ -21,7 +21,7 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
         if pr.tracks[0].pianoroll.shape[0]>max_timesteps:
             piano_roll= pr.tracks[0].pianoroll[0:max_timesteps, :]
             piano_roll= np.where(piano_roll>0,1,0)
-            piano_roll= np.reshape(piano_roll,(int(max_timesteps/QUANTIZATION),QUANTIZATION,-1))
+            piano_roll= np.reshape(piano_roll,(-1,4*QUANTIZATION,128))
             piano_roll= np.expand_dims(piano_roll,axis=3)
             songs.append(piano_roll)
             counter+=1

@@ -23,7 +23,7 @@ from keras.layers.convolutional import UpSampling2D, Conv2D, Conv1D, Conv2DTrans
 from keras.models import Sequential, Model
 
 
-FIXED_NUMBER_OF_BARS= 8
+FIXED_NUMBER_OF_QUARTERS= 8
 QUANTIZATION = 8
 BATCH_SIZE = 64
 latent_dimension = 64
@@ -46,8 +46,8 @@ class MuseGAN:
         self.input_shape = input_shape  # 128
         self.z_dim = z_dim  # size of encoding
 
-        self.n_bars= FIXED_NUMBER_OF_BARS  # Generates only fixed length music
-        self.n_steps_per_bar= quantization
+        self.n_bars= int(FIXED_NUMBER_OF_QUARTERS/4 ) # Generates only fixed length music
+        self.n_steps_per_bar= 4*quantization
         self.weight_init ='he_normal' #RandomNormal(mean=0., stddev=0.02)
         self.batch_size = batch_size
 
@@ -380,20 +380,20 @@ class MuseGAN:
 
 
 
-fixed_timesteps= FIXED_NUMBER_OF_BARS*QUANTIZATION
+fixed_timesteps= FIXED_NUMBER_OF_QUARTERS * QUANTIZATION
 
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
 # try 0.001 next
-optimizer= RMSprop(learning_rate=0.0005)
+optimizer= RMSprop(learning_rate=0.001)
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.00005
               , generator_lr=0.00005, optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 2
+EPOCHS = 2000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 THRESHOLD= 0.75
@@ -406,14 +406,14 @@ gan.train(
 pred_noise = np.random.normal(0, 1, (1, gan.z_dim))
 gen_scores = gan.generator.predict(pred_noise)
 gen_scores = np.squeeze(gen_scores)
-#gen_scores = (gen_scores.astype(np.float32)*67.5) + 67.5
-gen_scores= np.reshape(gen_scores,(gen_scores.shape[0]*gen_scores.shape[1],-1))
+#gen_scores= np.reshape(gen_scores,(gen_scores.shape[0]*gen_scores.shape[1],-1))
+gen_scores= np.reshape(gen_scores,(fixed_timesteps,-1))
 #THRESHOLD*=np.max(gen_scores)
 gen_scores=np.where(gen_scores>0,70,0)
 track= pypianoroll.StandardTrack(pianoroll=gen_scores)
 #track=track.binarize()
-multi= pypianoroll.Multitrack(tracks=[track])
-multi.set_resolution(QUANTIZATION)
+multi= pypianoroll.Multitrack(tracks=[track],resolution=QUANTIZATION)
+#multi.set_resolution(QUANTIZATION)
 pypianoroll.write(path='try.mid',multitrack=multi)
 a=0
 
