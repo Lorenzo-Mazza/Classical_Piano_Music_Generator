@@ -75,7 +75,7 @@ def load_data( path='maestro-v2.0.0'):
         songs.append(piano_roll)
         counter+=1
 
-        if counter==500:
+        if counter==50:
              break
     return songs
 
