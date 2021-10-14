@@ -24,7 +24,7 @@ from keras.models import Sequential, Model
 
 
 # W-GAN that generates fixed length, 4/4 music.
-FIXED_NUMBER_OF_BARS= 64
+FIXED_NUMBER_OF_BARS= 32
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
 BATCH_SIZE = 64
@@ -251,6 +251,7 @@ class MuseGAN:
 
 fixed_timesteps= FIXED_NUMBER_OF_QUARTERS * QUANTIZATION
 
+print ("quantization is %d"%QUANTIZATION)
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
@@ -270,13 +271,14 @@ gan.train(
     , batch_size = BATCH_SIZE
     , epochs = EPOCHS)
 
-pred_noise = np.random.normal(0, 1, (1, gan.z_dim))
-gan.generator.load_weights('best model')
-gen_scores = gan.generator.predict(pred_noise)
-gen_scores = np.squeeze(gen_scores)
-gen_scores= np.reshape(gen_scores,(fixed_timesteps,-1))
-gen_scores=np.where(gen_scores>0,67,0)
-track= pypianoroll.StandardTrack(pianoroll=gen_scores)
-multi= pypianoroll.Multitrack(tracks=[track],resolution=QUANTIZATION)
-pypianoroll.write(path='try.mid',multitrack=multi)
+for counter in range(10):
+    pred_noise = np.random.normal(0, 1, (1, gan.z_dim))
+    gan.generator.load_weights('best model')
+    gen_scores = gan.generator.predict(pred_noise)
+    gen_scores = np.squeeze(gen_scores)
+    gen_scores= np.reshape(gen_scores,(fixed_timesteps,-1))
+    gen_scores=np.where(gen_scores>0,67,0)
+    track= pypianoroll.StandardTrack(pianoroll=gen_scores)
+    multi= pypianoroll.Multitrack(tracks=[track],resolution=QUANTIZATION)
+    pypianoroll.write(path='try%d.mid'% counter,multitrack=multi)
 
