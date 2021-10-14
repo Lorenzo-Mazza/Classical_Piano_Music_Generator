@@ -24,7 +24,7 @@ from keras.models import Sequential, Model
 
 
 # W-GAN that generates fixed length, 4/4 music.
-FIXED_NUMBER_OF_BARS= 32
+FIXED_NUMBER_OF_BARS= 64
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
 BATCH_SIZE = 16
