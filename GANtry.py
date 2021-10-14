@@ -27,7 +27,7 @@ from keras.models import Sequential, Model
 FIXED_NUMBER_OF_BARS= 32
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
-BATCH_SIZE = 64
+BATCH_SIZE = 16
 latent_dimension = 128
 
 physical_devices = tf.config.list_physical_devices('GPU')
