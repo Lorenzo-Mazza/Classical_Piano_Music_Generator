@@ -24,7 +24,7 @@ from keras.models import Sequential, Model
 
 
 # W-GAN that generates fixed length, 4/4 music.
-FIXED_NUMBER_OF_BARS= 128
+FIXED_NUMBER_OF_BARS= 64
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
 BATCH_SIZE = 64
@@ -154,8 +154,8 @@ class MuseGAN:
         x = self.conv(x, f=512, k=(1, 3, 1), s=(1, 2, 1), a='lrelu', p='same')
         x= (Dropout(0.25))(x)
         x = Flatten()(x)
-        x = Dense(1024, kernel_initializer=self.weight_init)(x)
-        x = LeakyReLU()(x)
+        #x = Dense(1024, kernel_initializer=self.weight_init)(x)
+        #x = LeakyReLU()(x)
         critic_output = Dense(1, activation=None, kernel_initializer=self.weight_init)(x)
 
         return Model(critic_input, critic_output)
@@ -261,7 +261,7 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 2
+EPOCHS = 2000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 
