@@ -23,7 +23,9 @@ from keras.layers.convolutional import UpSampling2D, Conv2D, Conv1D, Conv2DTrans
 from keras.models import Sequential, Model
 
 
-FIXED_NUMBER_OF_QUARTERS= 32
+# W-GAN that generates fixed length, 4/4 music.
+FIXED_NUMBER_OF_BARS= 256
+FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
 BATCH_SIZE = 64
 latent_dimension = 128
@@ -55,9 +57,6 @@ class MuseGAN:
         self.g_losses = []
         self.epoch = 0
 
-
-        """ Input Shape: N_SEQUENCES X SEQ_LENGTH for each feature (pitch,duration,velocity)"""
-        """ Output Shape: N_SEQUENCES X N_DIFFERENT CLASSES for each feature (pitch,duration,velocity)"""
 
         # Build and compile the critic
         self.critic = self.build_discriminator()
@@ -155,8 +154,8 @@ class MuseGAN:
         x = self.conv(x, f=512, k=(1, 3, 1), s=(1, 2, 1), a='lrelu', p='same')
         x= (Dropout(0.25))(x)
         x = Flatten()(x)
-        #x = Dense(1024, kernel_initializer=self.weight_init)(x)
-        #x = LeakyReLU()(x)
+        x = Dense(1024, kernel_initializer=self.weight_init)(x)
+        x = LeakyReLU()(x)
         critic_output = Dense(1, activation=None, kernel_initializer=self.weight_init)(x)
 
         return Model(critic_input, critic_output)
@@ -177,81 +176,10 @@ class MuseGAN:
         for l in m.layers:
             l.trainable = val
 
-
-
-    def build_adversarial(self):
-
-        # Freeze generator's layers while training critic
-        self.set_trainable(self.generator, False)
-        # Image input (real sample)
-        real_img = Input(shape=(self.n_bars, self.n_steps_per_bar, self.input_shape,1))
-
-        # Fake image
-        noise_input = Input(shape=(self.z_dim,), name='noise_input')
-        fake_img = self.generator(noise_input)
-
-        # critic determines validity of the real and fake images
-        fake = self.critic(fake_img)
-        valid = self.critic(real_img)
-
-
-
-        self.critic_model = Model(inputs=[real_img, noise_input],outputs=[valid, fake])
-
-        self.critic_model.compile(
-            loss=[self.wasserstein, self.wasserstein]
-            , optimizer=self.get_opti(self.discriminator_lr)
-            , loss_weights=[1, 1])
-        # For the generator we freeze the critic's layers
-        self.set_trainable(self.critic, False)
-        self.set_trainable(self.generator, True)
-
-        # Sampled noise for input to generator
-        noise_input = Input(shape=(self.z_dim,), name='noise_input')
-
-        # Generate images based of noise
-        img = self.generator(noise_input)
-        # Discriminator determines validity
-        model_output = self.critic(img)
-        # Defines generator generator_model
-        self.generator_model = Model(noise_input, model_output)
-
-        self.generator_model.compile(optimizer=self.get_opti(self.generator_lr)
-                                     , loss=self.wasserstein
-                                     )
-        self.set_trainable(self.critic, True)
-
-
-    def train_discriminator(self, x_train, batch_size, using_generator, x_train_iter):
-
-        valid = np.ones((batch_size, 1), dtype=np.float32)
-        fake = -np.ones((batch_size, 1), dtype=np.float32)
-        #dummy = np.zeros((batch_size, 1), dtype=np.float32)  # Dummy gt for gradient penalty
-        if using_generator:
-            true_imgs = next(x_train_iter)[0]
-            if true_imgs.shape[0] != batch_size:
-                true_imgs = next(x_train_iter)[0]
-        else:
-            idx = np.random.randint(0, len(x_train))
-            true_imgs = x_train[idx]
-
-        noise = np.random.normal(0, 1, (batch_size, self.z_dim))
-        #noise = np.random.uniform(0, 128, (batch_size, self.latent_dim))
-        d_loss = self.critic_model.train_on_batch([true_imgs, noise],[valid, fake])
-        return d_loss
-
-
-    def train_generator(self, batch_size):
-        valid = np.ones((batch_size, 1), dtype=np.float32)
-
-        noise = np.random.normal(0, 1, (batch_size, self.z_dim))
-        return self.generator_model.train_on_batch(noise, valid)
-
-
     def train(self, X_train, batch_size, epochs, n_critic=5):
         # Load the dataset
         X_train= list(X_train.as_numpy_iterator())
-        # Rescale -1 to 1
+        # Rescale -1 to 1 and fill the incomplete batches
         for i in range(len(X_train)):
             X_train[i]=2 * X_train[i] - 1
             if X_train[i].shape[0]%batch_size!=0:
@@ -264,6 +192,7 @@ class MuseGAN:
         fake = np.ones((batch_size, 1))
 
         early_stopping=0
+        d_loss_best=np.inf
         d_loss_prev= np.inf
         for epoch in range(epochs):
 
@@ -292,7 +221,6 @@ class MuseGAN:
                 d_loss_real = self.critic.train_on_batch(imgs, valid)
                 d_loss_fake = self.critic.train_on_batch(gen_imgs, fake)
                 d_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
-
                 if d_loss_prev<d_loss[0]:
                     early_stopping+=1
                 else:
@@ -312,81 +240,11 @@ class MuseGAN:
 
             # Plot the progress
             print("%d [D loss: %f] [G loss: %f]" % (epoch, 1 - d_loss[0], 1 - g_loss[0]))
+            if d_loss[0] < d_loss_best:
+                d_loss_best= d_loss[0]
+                self.generator.save_weights('best model')
             if early_stopping==10:
                 break
-
-    def train2(self, x_train, batch_size, epochs, n_critic=5, using_generator=False):
-        x_train_iter= x_train.as_numpy_iterator()
-        x_train= list(x_train_iter)
-        for epoch in range(self.epoch, self.epoch + epochs):
-            if epoch % 100 == 0:
-                critic_loops = 5
-            else:
-                critic_loops = n_critic
-            for _ in range(critic_loops):
-                d_loss = self.train_discriminator(x_train, batch_size, using_generator, x_train_iter)
-                # Clip critic weights
-                for l in self.critic.layers:
-                    weights = l.get_weights()
-                    weights = [np.clip(w, -self.clip_value, self.clip_value) for w in weights]
-                    l.set_weights(weights)
-            g_loss = self.train_generator(batch_size)
-            print("%d (%d, %d) [D loss: (%.1f)(R %.1f, F %.1f)] [G loss: %.1f]" %
-                   (epoch, critic_loops, 1, d_loss[0], d_loss[1],d_loss[2],g_loss))
-            self.d_losses.append(d_loss)
-            self.g_losses.append(g_loss)
-            self.epoch += 1
-
-
-
-"""    def train2(self, Y_train, epochs, batch_size, save_interval=50):
-
-        # Rescale -1 to 1
-        # np.interp(X_train, (X_train.min(), X_train.max()), (-1, +1))
-        # X_train = X_train / 127.5 - 1.
-        # Y_train = np.expand_dims(Y_train, axis=3)
-
-        # Adversarial ground truths
-        valid = -np.ones((batch_size, 1))
-        fake = np.ones((batch_size, 1))
-
-        for epoch in range(epochs):
-
-            # ---------------------
-            #  Train Discriminator
-            # ---------------------
-
-            # Select a random half of images
-            idx = np.random.randint(0, Y_train[0].shape[0], batch_size)
-            real_out = [Y_train[0][idx], Y_train[1][idx], Y_train[2][idx]]
-
-            # Sample noise and generate a batch of new music sequences
-            noises = [np.random.randint(0, 2, (batch_size, self.n_notes)),
-                      np.random.randint(0, 2, (batch_size, self.n_durations)),
-                      np.random.randint(0, 2, (batch_size, self.n_velocities))]
-            # Get the music sequences predicted by the generator
-            gen_seq = self.generator.predict(noises)
-
-            # Train the critic (real classified as ones and generated as zeros)
-            d_loss_real = self.critic.train_on_batch(real_out, valid)
-            d_loss_fake = self.critic.train_on_batch(gen_seq, fake)
-            d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
-
-            # ---------------------
-            #  Train Generator
-            # ---------------------
-
-            # Train the generator (wants critic to mistake his sequences as real)
-            g_loss = self.generator.train_on_batch(noises, real_out)
-
-            # g_loss = self.combined.train_on_batch(noises, valid)
-
-            # Plot the progress
-            print("%d [D loss: %f] [G loss: %f]" % (epoch, 1 - d_loss[0], 1 - g_loss[0]))
-
-            # If at save interval => save generated image samples
-            if epoch % save_interval == 0:
-                a = 0"""
 
 
 
@@ -396,7 +254,6 @@ fixed_timesteps= FIXED_NUMBER_OF_QUARTERS * QUANTIZATION
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
-# try 0.001 next
 optimizer= RMSprop(learning_rate=0.0005)
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.00005
               , generator_lr=0.00005, optimiser=optimizer, z_dim=latent_dimension
@@ -404,7 +261,7 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 6000
+EPOCHS = 2000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 
@@ -414,15 +271,12 @@ gan.train(
     , epochs = EPOCHS)
 
 pred_noise = np.random.normal(0, 1, (1, gan.z_dim))
+gan.generator.load_weights('best model')
 gen_scores = gan.generator.predict(pred_noise)
 gen_scores = np.squeeze(gen_scores)
-#gen_scores= np.reshape(gen_scores,(gen_scores.shape[0]*gen_scores.shape[1],-1))
 gen_scores= np.reshape(gen_scores,(fixed_timesteps,-1))
 gen_scores=np.where(gen_scores>0,67,0)
 track= pypianoroll.StandardTrack(pianoroll=gen_scores)
-#track=track.binarize()
 multi= pypianoroll.Multitrack(tracks=[track],resolution=QUANTIZATION)
-#multi.set_resolution(QUANTIZATION)
 pypianoroll.write(path='try.mid',multitrack=multi)
-a=0
 
