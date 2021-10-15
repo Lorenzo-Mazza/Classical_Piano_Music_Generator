@@ -28,8 +28,9 @@ FIXED_NUMBER_OF_BARS= 64
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
 BATCH_SIZE = 16
-latent_dimension = 128
 
+
+latent_dimension = 128
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
@@ -221,7 +222,7 @@ class MuseGAN:
                 d_loss_real = self.critic.train_on_batch(imgs, valid)
                 d_loss_fake = self.critic.train_on_batch(gen_imgs, fake)
                 d_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
-                if d_loss_prev<d_loss[0]:
+                if np.abs(d_loss_prev)<np.abs(d_loss[0]):
                     early_stopping+=1
                 else:
                     early_stopping=0
@@ -240,14 +241,31 @@ class MuseGAN:
 
             # Plot the progress
             print("%d [D loss: %f] [G loss: %f]" % (epoch, 1 - d_loss[0], 1 - g_loss[0]))
-            if d_loss[0] < d_loss_best:
+            if np.abs(d_loss[0]) < np.abs(d_loss_best):
                 d_loss_best= d_loss[0]
                 self.generator.save_weights('best model')
             if early_stopping==10:
                 break
 
-
-
+print("Why this fuckin memory does not work?!?")
+print("I'm thinking of ending things. Coming home is terrible, Coming home is terribly lonely"
+      "Because everything is worse once that you're home. You step back into the reality"
+      " where you came from when you were nothing and you come back to that nothing. Loneliness."
+      " This fucking Loneliness is fucking insustainable."
+      "I'm trying to do something to fix this but it does not work in any fucking case. I'm trying to reach for help."
+      "I hope it's gonna be better but I'm not sure"
+      "I hae no fear about what it's behind me. My fear is about what is behind me."
+      " What passed and will never come back."
+      "Is this fucking training gonna end? In the meantime what could I do? check the fucking mixture gaussian unsupervised method"
+      "or write the essay for fixmatch. "
+      "I love writing on the keyboard, finding the keys is so fucking easy , every letter gets illuminated."
+      "How much does this fake training lasts? Kinda forever. It's 1.26, 14 minutes passed and it didn't"
+      "do even an epoch. I don't know what to expect from it now. I m just trying to pretend to have something"
+      "to do."
+      "Nella realta uno che ti arriva bello catrico, certo se hai studiato centomila volte una proiexzione mgaari arriva uno che ti viene addosso"
+      "tu magari lo pigli e lo proietti non e impossibile dipende come ti arriva. poi dipende va beh da quanto"
+      "sei incazzato"
+      )
 
 fixed_timesteps= FIXED_NUMBER_OF_QUARTERS * QUANTIZATION
 
