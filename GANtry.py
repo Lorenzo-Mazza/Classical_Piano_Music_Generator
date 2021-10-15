@@ -27,7 +27,7 @@ from keras.models import Sequential, Model
 FIXED_NUMBER_OF_BARS= 64
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 
 
 latent_dimension = 128
@@ -254,7 +254,7 @@ print ("quantization is %d"%QUANTIZATION)
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
-optimizer= RMSprop(learning_rate=0.0001)  # base=0.0005
+optimizer= RMSprop(learning_rate=0.0005)  # base=0.0005
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.00005
               , generator_lr=0.00005, optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
