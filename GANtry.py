@@ -244,7 +244,7 @@ class MuseGAN:
             if np.abs(d_loss[0]) < np.abs(d_loss_best):
                 d_loss_best= d_loss[0]
                 self.generator.save_weights('best model')
-            if early_stopping==10:
+            if early_stopping==20:
                 break
         return d_loss_best
 
