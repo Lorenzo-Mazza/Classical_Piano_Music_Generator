@@ -24,10 +24,10 @@ from keras.models import Sequential, Model
 
 
 # W-GAN that generates fixed length, 4/4 music.
-FIXED_NUMBER_OF_BARS= 32
+FIXED_NUMBER_OF_BARS= 64
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 
 
 latent_dimension = 128
@@ -246,6 +246,7 @@ class MuseGAN:
                 self.generator.save_weights('best model')
             if early_stopping==10:
                 break
+        return d_loss_best
 
 
 fixed_timesteps= FIXED_NUMBER_OF_QUARTERS * QUANTIZATION
@@ -254,22 +255,23 @@ print ("quantization is %d"%QUANTIZATION)
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
-optimizer= RMSprop(learning_rate=0.0005)  # base=0.0005
+optimizer= RMSprop(learning_rate=0.0001)  # base=0.0005
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.00005
               , generator_lr=0.00005, optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 2000
+EPOCHS = 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 
-gan.train(
+d_loss_best= gan.train(
     training_data
     , batch_size = BATCH_SIZE
     , epochs = EPOCHS)
 
+print("best loss is %f"% d_loss_best)
 for counter in range(10):
     pred_noise = np.random.normal(0, 1, (1, gan.z_dim))
     gan.generator.load_weights('best model')
