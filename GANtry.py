@@ -262,7 +262,7 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 6000
+EPOCHS = 9000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 
@@ -274,7 +274,7 @@ d_loss_best= gan.train(
 print("best loss is %f"% d_loss_best)
 for counter in range(10):
     pred_noise = np.random.normal(0, 1, (1, gan.z_dim))
-    gan.generator.load_weights('best model')
+    #gan.generator.load_weights('best model')
     gen_scores = gan.generator.predict(pred_noise)
     gen_scores = np.squeeze(gen_scores)
     gen_scores= np.reshape(gen_scores,(fixed_timesteps,-1))
