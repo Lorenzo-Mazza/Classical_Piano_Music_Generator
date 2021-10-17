@@ -257,12 +257,12 @@ input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
 optimizer= RMSprop(learning_rate=0.0005)  # base=0.0005
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.00005
-              , generator_lr=0.00005, optimiser=optimizer, z_dim=latent_dimension
+              , generator_lr=0.00001, optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 9000
+EPOCHS = 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 
