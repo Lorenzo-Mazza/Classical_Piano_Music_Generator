@@ -19,17 +19,18 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
         pr= pypianoroll.read(name)
         pr.set_resolution(QUANTIZATION)
         if pr.tracks[0].pianoroll.shape[0]>max_timesteps:
-            for semitone in range(0,12):
+            for semitone in range(0,6):
                 if semitone==0:
-                    piano_roll = pr.tracks[0].transpose(-6).pianoroll[0:max_timesteps, :]
+                    piano_roll = pr.tracks[0].transpose(-2).pianoroll[0:max_timesteps, :]
                 else:
                     piano_roll= pr.tracks[0].transpose(1).pianoroll[0:max_timesteps, :]
                 piano_roll = np.where(piano_roll > 0, 1, 0)
                 piano_roll= np.reshape(piano_roll,(-1,4*QUANTIZATION,128))
                 piano_roll= np.expand_dims(piano_roll,axis=3)
                 songs.append(piano_roll)
-                print("song added")
-            counter+=1
+                counter+=1
+                print("song %f added"% counter)
+
 
         #if counter==64:
         #     break
