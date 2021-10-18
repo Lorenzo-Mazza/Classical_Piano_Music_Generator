@@ -28,6 +28,7 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
                 piano_roll= np.reshape(piano_roll,(-1,4*QUANTIZATION,128))
                 piano_roll= np.expand_dims(piano_roll,axis=3)
                 songs.append(piano_roll)
+                print("song added")
             counter+=1
 
         #if counter==64:
