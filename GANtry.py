@@ -9,6 +9,7 @@ from keras.optimizer_v2.rmsprop import RMSprop
 import LoadPianoroll
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 from keras.layers import LSTM, Input, Dropout, Dense, Activation, Embedding, Concatenate, Reshape
 from keras.layers import Flatten, RepeatVector, Permute, TimeDistributed
 from keras.layers import Multiply, Lambda, Softmax
@@ -195,6 +196,8 @@ class MuseGAN:
         early_stopping=0
         d_loss_best=np.inf
         d_loss_prev= np.inf
+        d_losses=[]
+        g_losses=[]
         for epoch in range(epochs):
 
             for _ in range(n_critic):
@@ -222,6 +225,7 @@ class MuseGAN:
                 d_loss_real = self.critic.train_on_batch(imgs, valid)
                 d_loss_fake = self.critic.train_on_batch(gen_imgs, fake)
                 d_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
+                d_losses.append(d_loss)
                 if np.abs(d_loss_prev)<np.abs(d_loss[0]):
                     early_stopping+=1
                 else:
@@ -238,7 +242,7 @@ class MuseGAN:
             # ---------------------
 
             g_loss = self.combined.train_on_batch(noise, valid)
-
+            g_losses.append(g_loss)
             # Plot the progress
             print("%d [D loss: %f] [G loss: %f]" % (epoch, 1 - d_loss[0], 1 - g_loss[0]))
             if np.abs(d_loss[0]) < np.abs(d_loss_best):
@@ -246,6 +250,9 @@ class MuseGAN:
                 self.generator.save_weights('best model')
             #if early_stopping==10:
             #    break
+        plt.plot(d_losses,np.arange(epochs))
+        plt.plot(g_losses,np.arange(epochs))
+        plt.savefig("GAN Losses Plot.png")
         return d_loss_best
 
 
