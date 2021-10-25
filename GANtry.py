@@ -25,13 +25,13 @@ from keras.models import Sequential, Model
 
 
 # W-GAN that generates fixed length, 4/4 music.
-FIXED_NUMBER_OF_BARS= 32
+FIXED_NUMBER_OF_BARS= 8
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 
-latent_dimension = 128
+latent_dimension = 64
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
