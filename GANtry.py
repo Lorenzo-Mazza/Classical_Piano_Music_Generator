@@ -25,13 +25,13 @@ from keras.models import Sequential, Model
 
 
 # W-GAN that generates fixed length, 4/4 music.
-FIXED_NUMBER_OF_BARS= 8
+FIXED_NUMBER_OF_BARS= 8 #Baseline= 8
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
-BATCH_SIZE = 64
+BATCH_SIZE = 64 #Baseline= 64
 
 
-latent_dimension = 64
+latent_dimension = 64 #Baseline= 128
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
@@ -39,11 +39,9 @@ for device in physical_devices:
 
 
 class MuseGAN:
-    def __init__(self, input_shape, discriminator_lr, generator_lr,
+    def __init__(self, input_shape,
                  optimiser, z_dim, batch_size, quantization):
 
-        self.discriminator_lr = discriminator_lr
-        self.generator_lr = generator_lr
         self.optimiser = optimiser
         self.clip_value = 0.01
 
@@ -193,7 +191,6 @@ class MuseGAN:
         valid = -np.ones((batch_size, 1))
         fake = np.ones((batch_size, 1))
 
-        early_stopping=0
         d_loss_best=np.inf
         d_loss_prev= np.inf
         d_losses=[]
@@ -218,18 +215,11 @@ class MuseGAN:
                 # Generate a batch of new images
                 gen_imgs = self.generator.predict(noise)
 
-                # Save previous loss
-                if epoch!=0:
-                    d_loss_prev= d_loss[0]
                 # Train the critic
                 d_loss_real = self.critic.train_on_batch(imgs, valid)
                 d_loss_fake = self.critic.train_on_batch(gen_imgs, fake)
                 d_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
                 d_losses.append(d_loss)
-                if np.abs(d_loss_prev)<np.abs(d_loss[0]):
-                    early_stopping+=1
-                else:
-                    early_stopping=0
 
                 # Clip critic weights
                 for l in self.critic.layers:
@@ -247,9 +237,7 @@ class MuseGAN:
             print("%d [D loss: %f] [G loss: %f]" % (epoch, 1 - d_loss[0], 1 - g_loss[0]))
             if np.abs(d_loss[0]) < np.abs(d_loss_best):
                 d_loss_best= d_loss[0]
-                self.generator.save_weights('best model')
-            #if early_stopping==10:
-            #    break
+                self.generator.save_weights('best loss')
         plt.plot(d_losses,np.arange(epochs))
         plt.plot(g_losses,np.arange(epochs))
         plt.savefig("GAN Losses Plot.png")
@@ -262,14 +250,13 @@ print ("quantization is %d"%QUANTIZATION)
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
-optimizer= RMSprop(learning_rate=0.0001)  # base=0.0005
-gan = MuseGAN(input_shape=training_data.element_spec.shape[3], discriminator_lr=0.00005
-              , generator_lr=0.00001, optimiser=optimizer, z_dim=latent_dimension
+optimizer= RMSprop(learning_rate=0.0001)  # baseline=0.0005
+gan = MuseGAN(input_shape=training_data.element_spec.shape[3], optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 6000
+EPOCHS = 6000  #Baseline= 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 
