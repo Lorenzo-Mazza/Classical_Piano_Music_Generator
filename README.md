@@ -1,1 +1,1 @@
-# Classical Piano Music Generator/Classificator (Still to decide)- Music Informatics Final Project
+# Classical Piano Music Generator- Music Informatics Final Project
