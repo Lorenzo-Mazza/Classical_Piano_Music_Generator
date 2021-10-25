@@ -19,10 +19,10 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
         pr.set_resolution(QUANTIZATION)
         if pr.tracks[0].pianoroll.shape[0]>max_timesteps:
 
-            #augmenting the piece, taking 6 different transpositions, baseline= no transposition
-            for semitone in range(0,6):
+            #augmenting the piece, taking 3 different transpositions, baseline= no transposition
+            for semitone in range(0,2):
                 if semitone==0:
-                    piano_roll = pr.tracks[0].transpose(-2).pianoroll[0:max_timesteps, :]
+                    piano_roll = pr.tracks[0].transpose(-1).pianoroll[0:max_timesteps, :]
                 else:
                     piano_roll= pr.tracks[0].transpose(1).pianoroll[0:max_timesteps, :]
                 piano_roll = np.where(piano_roll > 0, 1, 0)
@@ -31,10 +31,10 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
                 songs.append(piano_roll)
                 counter+=1
                 print("song %d added"% counter)
-
-
-        #if counter==64:
-        #     break
+            #if counter>=64:
+            #    break
+        #if counter>=64:
+        #    break
     return songs
 
 def create_batches(data,batch_size):
