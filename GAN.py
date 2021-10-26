@@ -1,6 +1,7 @@
 from functools import partial
 
 import pypianoroll
+import os
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.initializers.initializers_v2 import RandomNormal
 from keras.optimizer_v2.adam import Adam
@@ -29,12 +30,23 @@ FIXED_NUMBER_OF_BARS= 8  # Baseline= 8
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
 BATCH_SIZE = 64  # Baseline= 64
+RUN_ID = '0001'
+SECTION = 'compose'
+PARENT_FOLDER= os.getcwd()
+RUN_FOLDER = 'run/{}/'.format(SECTION)
+RUN_FOLDER += '_'.join(RUN_ID)
+if not os.path.exists(RUN_FOLDER):
+    os.makedirs(RUN_FOLDER)
+    os.mkdir(os.path.join(RUN_FOLDER, 'weights'))
+    os.mkdir(os.path.join(RUN_FOLDER, 'samples'))
+
 
 
 latent_dimension = 128  # Baseline= 128
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
+
 
 
 
@@ -154,8 +166,8 @@ class MuseGAN:
         x = self.conv(x, f=512, k=(1, 3, 1), s=(1, 2, 1), a='lrelu', p='same')
         x= (Dropout(0.25))(x)
         x = Flatten()(x)
-        #x = Dense(1024, kernel_initializer=self.weight_init)(x)
-        #x = LeakyReLU()(x)
+        x = Dense(1024, kernel_initializer=self.weight_init)(x)
+        x = LeakyReLU()(x)
         critic_output = Dense(1, activation=None, kernel_initializer=self.weight_init)(x)
 
         return Model(critic_input, critic_output)
@@ -190,8 +202,6 @@ class MuseGAN:
         valid = -np.ones((batch_size, 1))
         fake = np.ones((batch_size, 1))
 
-        d_loss_best=np.inf
-        d_loss_prev= np.inf
         d_losses=[]
         g_losses=[]
         for epoch in range(epochs):
@@ -230,17 +240,30 @@ class MuseGAN:
             # ---------------------
 
             g_loss = self.combined.train_on_batch(noise, valid)
-            g_losses.append(1 - g_loss[0])
-            d_losses.append(1 - d_loss[0])
+            g_losses.append(g_loss[0])
+            d_losses.append(d_loss[0])
             # Plot the progress
-            print("%d [D loss: %f] [G loss: %f]" % (epoch, 1 - d_loss[0], 1 - g_loss[0]))
-            if np.abs(d_loss[0]) < np.abs(d_loss_best):
-                d_loss_best= d_loss[0]
-                self.generator.save_weights('best loss')
+            print("%d [D loss: %f] [G loss: %f]" % (epoch, d_loss[0], g_loss[0]))
+            if epoch % 500==0:
+                self.generator.save_weights(os.path.join(RUN_FOLDER, 'weights/weights-g-%d.h5' % epoch))
+                self.write_to_midi(epoch, run_folder=RUN_FOLDER)
+
         plt.plot(np.arange(epochs),d_losses, label="Discriminator Loss")
         plt.plot(np.arange(epochs),g_losses,label="Generator Loss")
         plt.savefig("GAN Losses Plot.png")
-        return d_loss_best
+
+    def write_to_midi(self, epoch, run_folder):
+        for counter in range(10):
+            pred_noise = np.random.normal(0, 1, (1, self.z_dim))
+            gen_scores = self.generator.predict(pred_noise)
+            gen_scores = np.squeeze(gen_scores)
+            gen_scores = np.reshape(gen_scores, (fixed_timesteps, -1))
+            gen_scores = np.where(gen_scores > 0, 67, 0)
+            track = pypianoroll.StandardTrack(pianoroll=gen_scores)
+            multi = pypianoroll.Multitrack(tracks=[track], resolution=QUANTIZATION)
+            pypianoroll.write(path=os.path.join(run_folder,
+                                                "samples/sample_{}_{}.mid".format(epoch,counter))
+                              , multitrack=multi)
 
 
 fixed_timesteps= FIXED_NUMBER_OF_QUARTERS * QUANTIZATION
@@ -249,23 +272,21 @@ print ("quantization is %d"%QUANTIZATION)
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
-optimizer= RMSprop(learning_rate=0.0001)  # baseline=0.0005
+optimizer= RMSprop(learning_rate=0.00005)  # baseline=0.00005
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.critic.summary()
-
-EPOCHS = 6000  #Baseline= 6000
+EPOCHS = 6000  # Baseline= 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
-
-d_loss_best= gan.train(
+os.chdir(PARENT_FOLDER)
+gan.train(
     training_data
     , batch_size = BATCH_SIZE
     , epochs = EPOCHS)
 
-print("best loss is %f"% d_loss_best)
-for counter in range(20):
+"""for counter in range(20):
     pred_noise = np.random.normal(0, 1, (1, gan.z_dim))
     #gan.generator.load_weights('best model')
     gen_scores = gan.generator.predict(pred_noise)
@@ -276,3 +297,6 @@ for counter in range(20):
     multi= pypianoroll.Multitrack(tracks=[track],resolution=QUANTIZATION)
     pypianoroll.write(path='try%d.mid'% counter,multitrack=multi)
 
+if filename is None:
+    parts.write('midi', fp=os.path.join(run_folder, "samples/sample_{}_{}.midi".format(self.epoch, score_num)))
+"""
