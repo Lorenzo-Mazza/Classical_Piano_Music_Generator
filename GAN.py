@@ -30,7 +30,7 @@ FIXED_NUMBER_OF_BARS= 8  # Baseline= 8
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
 BATCH_SIZE = 64  # Baseline= 64
-RUN_ID = '0002'
+RUN_ID = '0004'
 SECTION = 'compose'
 PARENT_FOLDER= os.getcwd()
 RUN_FOLDER = 'run/{}/'.format(SECTION)
@@ -42,7 +42,7 @@ if not os.path.exists(RUN_FOLDER):
 
 
 
-latent_dimension = 64  # Baseline= 128
+latent_dimension = 256  # Baseline= 128
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
@@ -287,8 +287,8 @@ gan.epoch = 0
 os.chdir(PARENT_FOLDER)
 gan.train(
     training_data
-    , batch_size = BATCH_SIZE
-    , epochs = EPOCHS)
+    , batch_size=BATCH_SIZE
+    , epochs=EPOCHS)
 
 """for counter in range(20):
     pred_noise = np.random.normal(0, 1, (1, gan.z_dim))
