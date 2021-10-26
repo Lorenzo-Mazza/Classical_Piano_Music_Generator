@@ -237,8 +237,8 @@ class MuseGAN:
             if np.abs(d_loss[0]) < np.abs(d_loss_best):
                 d_loss_best= d_loss[0]
                 self.generator.save_weights('best loss')
-        plt.plot(d_losses,np.arange(epochs))
-        plt.plot(g_losses,np.arange(epochs))
+        plt.plot(np.arange(epochs),d_losses)
+        plt.plot(np.arange(epochs),g_losses)
         plt.savefig("GAN Losses Plot.png")
         return d_loss_best
 
@@ -255,7 +255,7 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], optimiser=optimiz
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 6000  #Baseline= 6000
+EPOCHS = 6  #Baseline= 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 
