@@ -25,13 +25,13 @@ from keras.models import Sequential, Model
 
 
 # W-GAN that generates fixed length, 4/4 music.
-FIXED_NUMBER_OF_BARS= 8 #Baseline= 8
+FIXED_NUMBER_OF_BARS= 8  # Baseline= 8
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
-BATCH_SIZE = 64 #Baseline= 64
+BATCH_SIZE = 64  # Baseline= 64
 
 
-latent_dimension = 64 #Baseline= 128
+latent_dimension = 128  # Baseline= 128
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
@@ -48,7 +48,7 @@ class MuseGAN:
         self.input_shape = input_shape  # 128
         self.z_dim = z_dim  # size of encoding
 
-        self.n_bars= int(FIXED_NUMBER_OF_QUARTERS/4 ) # Generates only fixed length music
+        self.n_bars= int(FIXED_NUMBER_OF_QUARTERS/4)  # Generates only fixed length music
         self.n_steps_per_bar= 4*quantization
         self.weight_init ='he_normal' #RandomNormal(mean=0., stddev=0.02)
         self.batch_size = batch_size
@@ -185,7 +185,6 @@ class MuseGAN:
             if X_train[i].shape[0]%batch_size!=0:
                 fill=-np.ones((batch_size-X_train[i].shape[0]%batch_size,*X_train[i].shape[1:]))
                 X_train[i]=np.concatenate((X_train[i],fill),axis=0)
-       # X_train=[2 * batch - 1 for batch in X_train]
 
         # Adversarial ground truths
         valid = -np.ones((batch_size, 1))
@@ -266,7 +265,7 @@ d_loss_best= gan.train(
     , epochs = EPOCHS)
 
 print("best loss is %f"% d_loss_best)
-for counter in range(10):
+for counter in range(20):
     pred_noise = np.random.normal(0, 1, (1, gan.z_dim))
     #gan.generator.load_weights('best model')
     gen_scores = gan.generator.predict(pred_noise)
