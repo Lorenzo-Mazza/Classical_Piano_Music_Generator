@@ -218,7 +218,6 @@ class MuseGAN:
                 d_loss_real = self.critic.train_on_batch(imgs, valid)
                 d_loss_fake = self.critic.train_on_batch(gen_imgs, fake)
                 d_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
-                d_losses.append(d_loss)
 
                 # Clip critic weights
                 for l in self.critic.layers:
@@ -231,7 +230,8 @@ class MuseGAN:
             # ---------------------
 
             g_loss = self.combined.train_on_batch(noise, valid)
-            g_losses.append(g_loss)
+            g_losses.append(g_loss[0])
+            d_losses.append(d_loss[0])
             # Plot the progress
             print("%d [D loss: %f] [G loss: %f]" % (epoch, 1 - d_loss[0], 1 - g_loss[0]))
             if np.abs(d_loss[0]) < np.abs(d_loss_best):
