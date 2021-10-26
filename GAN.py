@@ -42,7 +42,7 @@ if not os.path.exists(RUN_FOLDER):
 
 
 
-latent_dimension = 128  # Baseline= 128
+latent_dimension = 64  # Baseline= 128
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
@@ -166,8 +166,8 @@ class MuseGAN:
         x = self.conv(x, f=512, k=(1, 3, 1), s=(1, 2, 1), a='lrelu', p='same')
         x= (Dropout(0.25))(x)
         x = Flatten()(x)
-        x = Dense(1024, kernel_initializer=self.weight_init)(x)
-        x = LeakyReLU()(x)
+        #x = Dense(1024, kernel_initializer=self.weight_init)(x)
+        #x = LeakyReLU()(x)
         critic_output = Dense(1, activation=None, kernel_initializer=self.weight_init)(x)
 
         return Model(critic_input, critic_output)
@@ -250,6 +250,10 @@ class MuseGAN:
 
         plt.plot(np.arange(epochs),d_losses, label="Discriminator Loss")
         plt.plot(np.arange(epochs),g_losses,label="Generator Loss")
+        plt.title("loss")
+        plt.ylabel('Loss')
+        plt.xlabel('Epoch')
+        plt.legend(loc='best')
         plt.savefig("GAN Losses Plot.png")
 
     def write_to_midi(self, epoch, run_folder):
@@ -272,7 +276,7 @@ print ("quantization is %d"%QUANTIZATION)
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
-optimizer= RMSprop(learning_rate=0.00015)  # baseline=0.00005
+optimizer= RMSprop(learning_rate=0.00001)  # baseline=0.00005
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
