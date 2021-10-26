@@ -255,7 +255,7 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], optimiser=optimiz
 gan.generator.summary()
 gan.critic.summary()
 
-EPOCHS = 6  #Baseline= 6000
+EPOCHS = 6000  #Baseline= 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 
