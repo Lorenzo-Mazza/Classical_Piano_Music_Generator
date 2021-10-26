@@ -230,15 +230,15 @@ class MuseGAN:
             # ---------------------
 
             g_loss = self.combined.train_on_batch(noise, valid)
-            g_losses.append(g_loss[0])
-            d_losses.append(d_loss[0])
+            g_losses.append(1 - g_loss[0])
+            d_losses.append(1 - d_loss[0])
             # Plot the progress
             print("%d [D loss: %f] [G loss: %f]" % (epoch, 1 - d_loss[0], 1 - g_loss[0]))
             if np.abs(d_loss[0]) < np.abs(d_loss_best):
                 d_loss_best= d_loss[0]
                 self.generator.save_weights('best loss')
-        plt.plot(np.arange(epochs),d_losses)
-        plt.plot(np.arange(epochs),g_losses)
+        plt.plot(np.arange(epochs),d_losses, label="Discriminator Loss")
+        plt.plot(np.arange(epochs),g_losses,label="Generator Loss")
         plt.savefig("GAN Losses Plot.png")
         return d_loss_best
 
@@ -249,7 +249,7 @@ print ("quantization is %d"%QUANTIZATION)
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
-optimizer= RMSprop(learning_rate=0.0005)  # baseline=0.0005
+optimizer= RMSprop(learning_rate=0.0001)  # baseline=0.0005
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
