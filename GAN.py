@@ -30,7 +30,7 @@ FIXED_NUMBER_OF_BARS= 8  # Baseline= 8
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
 BATCH_SIZE = 64  # Baseline= 64
-RUN_ID = '0006'
+RUN_ID = '0007'
 SECTION = 'compose'
 PARENT_FOLDER= os.getcwd()
 RUN_FOLDER = 'run/{}/'.format(SECTION)
@@ -276,12 +276,12 @@ print ("quantization is %d"%QUANTIZATION)
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
-optimizer= RMSprop(learning_rate=0.001)  # baseline=0.00005
+optimizer= RMSprop(learning_rate=0.0005)  # baseline=0.00005
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.critic.summary()
-EPOCHS = 2000  # Baseline= 6000
+EPOCHS = 3500  # Baseline= 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 os.chdir(PARENT_FOLDER)
