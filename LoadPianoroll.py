@@ -7,7 +7,7 @@ import tensorflow as tf
 import numpy as np
 import pypianoroll
 
-QUANTIZATION = 8
+QUANTIZATION = 4
 
 def load_data(max_timesteps, path='maestro-v2.0.0'):
     os.chdir(path)
