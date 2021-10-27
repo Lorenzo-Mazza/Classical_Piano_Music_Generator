@@ -26,11 +26,11 @@ from keras.models import Sequential, Model
 
 
 # W-GAN that generates fixed length, 4/4 music.
-FIXED_NUMBER_OF_BARS= 8  # Baseline= 8
+FIXED_NUMBER_OF_BARS= 4  # Baseline= 8
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
 BATCH_SIZE = 64  # Baseline= 64
-RUN_ID = '0007'
+RUN_ID = '0008'
 SECTION = 'compose'
 PARENT_FOLDER= os.getcwd()
 RUN_FOLDER = 'run/{}/'.format(SECTION)
@@ -281,7 +281,7 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], optimiser=optimiz
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.critic.summary()
-EPOCHS = 3500  # Baseline= 6000
+EPOCHS = 2000  # Baseline= 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 os.chdir(PARENT_FOLDER)

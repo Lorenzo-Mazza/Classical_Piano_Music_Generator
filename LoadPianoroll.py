@@ -20,7 +20,7 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
         pr.set_resolution(QUANTIZATION)
         if pr.tracks[0].pianoroll.shape[0]>max_timesteps and augmentation:
             #augmenting the piece, taking n different transpositions, baseline= no transposition
-            for semitone in range(0,3):
+            for semitone in range(0,5):
                 if semitone==0:
                     piano_roll = pr.tracks[0].transpose(-1).pianoroll[0:max_timesteps, :]
                 else:
