@@ -30,7 +30,7 @@ FIXED_NUMBER_OF_BARS= 8  # Baseline= 8
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
 BATCH_SIZE = 64  # Baseline= 64
-RUN_ID = '0003'
+RUN_ID = '0002'
 SECTION = 'compose'
 PARENT_FOLDER= os.getcwd()
 RUN_FOLDER = 'run/{}/'.format(SECTION)
@@ -42,7 +42,7 @@ if not os.path.exists(RUN_FOLDER):
 
 
 
-latent_dimension = 128  # Baseline= 128
+latent_dimension = 64  # Baseline= 128
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
@@ -276,7 +276,7 @@ print ("quantization is %d"%QUANTIZATION)
 training_data = LoadPianoroll.load_data(fixed_timesteps)
 input_shape= training_data[0].shape[2]  # notes= 128
 training_data=LoadPianoroll.create_batches(training_data,BATCH_SIZE)
-optimizer= RMSprop(learning_rate=0.00001)  # baseline=0.00005
+optimizer= RMSprop(learning_rate=0.00005)  # baseline=0.00005
 gan = MuseGAN(input_shape=training_data.element_spec.shape[3], optimiser=optimizer, z_dim=latent_dimension
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
