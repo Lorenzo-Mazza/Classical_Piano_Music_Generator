@@ -281,7 +281,7 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], optimiser=optimiz
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.critic.summary()
-EPOCHS = 2000  # Baseline= 6000
+EPOCHS = 1250  # Baseline= 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 os.chdir(PARENT_FOLDER)
