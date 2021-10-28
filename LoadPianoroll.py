@@ -19,19 +19,7 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
     for name, author in zip(infos['midi_filename'], infos['canonical_composer']):
         pr= pypianoroll.read(name)
         pr.set_resolution(QUANTIZATION)
-        dim_counter=0
-        while dim_counter+max_timesteps<pr.tracks[0].pianoroll.shape[0]:
-            piano_roll= pr.tracks[0].transpose(1).pianoroll[dim_counter:dim_counter+max_timesteps, :]
-            piano_roll = np.where(piano_roll > 0, 1, 0)
-            piano_roll = np.reshape(piano_roll, (-1, 4 * QUANTIZATION, 128))
-            piano_roll = np.expand_dims(piano_roll, axis=3)
-            songs.append(piano_roll)
-            counter += 1
-            print("piece %d added" % counter)
-            dim_counter+=max_timesteps
-        if counter>10000:
-            break
-        """ if pr.tracks[0].pianoroll.shape[0]>max_timesteps and augmentation:
+        if pr.tracks[0].pianoroll.shape[0]>max_timesteps and augmentation:
                 #augmenting the piece, taking n different transpositions, baseline= no transposition
                 for semitone in range(0,5):
                     if semitone==0:
@@ -44,14 +32,14 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
                     songs.append(piano_roll)
                     counter+=1
                     print("song %d added"% counter)
-            elif pr.tracks[0].pianoroll.shape[0]>max_timesteps and not augmentation:
+        elif pr.tracks[0].pianoroll.shape[0]>max_timesteps and not augmentation:
                 piano_roll = pr.tracks[0].pianoroll[0:max_timesteps, :]
                 piano_roll = np.where(piano_roll > 0, 1, 0)
                 piano_roll = np.reshape(piano_roll, (-1, 4 * QUANTIZATION, 128))
                 piano_roll = np.expand_dims(piano_roll, axis=3)
                 songs.append(piano_roll)
                 counter += 1
-                print("song %d added" % counter)"""
+                print("song %d added" % counter)
         #if counter>=64:
         #    break
     return songs
