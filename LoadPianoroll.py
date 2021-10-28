@@ -29,7 +29,7 @@ def load_data(max_timesteps, path='maestro-v2.0.0'):
             counter += 1
             print("piece %d added" % counter)
             dim_counter+=max_timesteps
-        if counter>1000:
+        if counter>10000:
             break
         """ if pr.tracks[0].pianoroll.shape[0]>max_timesteps and augmentation:
                 #augmenting the piece, taking n different transpositions, baseline= no transposition
