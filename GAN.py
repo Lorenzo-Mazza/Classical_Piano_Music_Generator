@@ -30,7 +30,7 @@ FIXED_NUMBER_OF_BARS= 8  # Baseline= 8
 FIXED_NUMBER_OF_QUARTERS= 4*FIXED_NUMBER_OF_BARS
 QUANTIZATION = 8
 BATCH_SIZE = 64  # Baseline= 64
-RUN_ID = '0011'
+RUN_ID = '0012'
 SECTION = 'compose'
 PARENT_FOLDER= os.getcwd()
 RUN_FOLDER = 'run/{}/'.format(SECTION)
@@ -219,7 +219,7 @@ class MuseGAN:
                 #imgs= np.squeeze(imgs,axis=0)
 
                 # Sample noise as generator input
-                noise = np.random.normal(0, 1, (batch_size, self.z_dim))
+                noise = np.random.normal(0, 0.2, (batch_size, self.z_dim))
 
                 # Generate a batch of new images
                 gen_imgs = self.generator.predict(noise)
@@ -244,7 +244,7 @@ class MuseGAN:
             d_losses.append(d_loss[0])
             # Plot the progress
             print("%d [D loss: %f] [G loss: %f]" % (epoch, d_loss[0], g_loss[0]))
-            if epoch>250 and epoch % 125==0:
+            if epoch>100 and epoch % 125==0:
                 self.generator.save_weights(os.path.join(RUN_FOLDER, 'weights/weights-g-%d.h5' % epoch))
                 self.write_to_midi(epoch, run_folder=RUN_FOLDER)
 
@@ -258,7 +258,7 @@ class MuseGAN:
 
     def write_to_midi(self, epoch, run_folder):
         for counter in range(10):
-            pred_noise = np.random.normal(0, 1, (1, self.z_dim))
+            pred_noise = np.random.normal(0, 0.2, (1, self.z_dim))
             gen_scores = self.generator.predict(pred_noise)
             gen_scores = np.squeeze(gen_scores)
             gen_scores = np.reshape(gen_scores, (fixed_timesteps, -1))
@@ -281,7 +281,7 @@ gan = MuseGAN(input_shape=training_data.element_spec.shape[3], optimiser=optimiz
               , batch_size=BATCH_SIZE, quantization=QUANTIZATION)
 gan.generator.summary()
 gan.critic.summary()
-EPOCHS = 1250  # Baseline= 6000
+EPOCHS = 1500             # Baseline= 6000
 PRINT_EVERY_N_BATCHES = 10
 gan.epoch = 0
 os.chdir(PARENT_FOLDER)
